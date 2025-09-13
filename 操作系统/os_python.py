@@ -1,4 +1,6 @@
 import os , threading , socket , start ,time ,datetime ,random , sys ,calendar
+import cowsay
+from pypinyin import pinyin, Style
 from tqdm import trange
 from time import sleep
 import tkinter as tk
@@ -35,7 +37,13 @@ command_list = {"帮助":"help",
      "分析网页源码":"get url",
      "RGB转十六进制":"RGB -> hex",
      "连接云电脑":"connect cloud computer",
-	 "测试概率":"text random"}
+	 "测试概率":"text random",
+	 "解方程":"solve math",
+	 "本月日历":"calendar-now",
+	 "前月日历":"calendar-last",
+	 "后月日历":"calendar-tomorrow",
+	 "中文字典":"chinese dict"}
+pinyin_string = ""
 class SimpleHTMLParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -118,37 +126,31 @@ def random_probability(probability,min=0,max=100):
 		return False
 def solve_math():
     while True:
-        print("\n===== 方程求解器 =====")
-        print("1. 一元一次方程")
-        print("2. 二元一次方程组")
-        print("3. 三元一次方程组")
-        print("4. 一元二次方程")
-        print("5. 退出")
-        choice = input("请输入选项编号（1-5）：").strip()
-
+        print("\033[35m1. 一元一次方程\033[0m")
+        print("\033[35m2. 二元一次方程组\033[0m")
+        print("\033[35m3. 三元一次方程组\033[0m")
+        print("\033[35m4. 一元二次方程\033[0m")
+        print("\033[35m5. exit")
+        choice = input("\033[34mInput number(1-5):\033[0m").strip()
         if choice == '5':
-            print("感谢使用，再见！")
+            print("\033[36mThanks for using Math!\033[0m")
             break
-
         try:
             if choice == '1':
-                # 一元一次方程
-                eq_str = input("请输入一元一次方程（例如：3*x + 5 = 0）：")
+                eq_str = input("\033[34mInput math(for example: 3*x + 5 = 0):\033[0m").strip()
                 x = symbols('x')
                 lhs, rhs = map(sympify, eq_str.split('='))
                 eq = Eq(lhs, rhs)
                 solution = solve(eq, x)
                 if not solution:
-                    print("该方程无解。")
+                    print("\033[31mHave no result\033[0m")
                 else:
-                    pretty_print(f"解为：{solution[0]}")
-                    print(f"近似值：{solution[0].evalf()}")
-
+                    pretty_print(f"\033[35mResult{solution[0]}\033[0m")
+                    print(f"\033[35mNear result:{solution[0].evalf()}\033[0m")
             elif choice == '2':
-                # 二元一次方程组
-                print("请输入两个方程，每个方程以等号结尾，例如：2*x + y = 8")
-                eq1_str = input("第一个方程：")
-                eq2_str = input("第二个方程：")
+                print("\033[34mInput math(for example:2*x + y = 8)\033[0m")
+                eq1_str = input("\033[34mThe first math\033[0m")
+                eq2_str = input("\033[34mThe second math\033[0m")
                 x, y = symbols('x y')
                 lhs1, rhs1 = map(sympify, eq1_str.split('='))
                 lhs2, rhs2 = map(sympify, eq2_str.split('='))
@@ -156,21 +158,19 @@ def solve_math():
                 eq2 = Eq(lhs2, rhs2)
                 solutions = solve((eq1, eq2), (x, y))
                 if not solutions:
-                    print("方程组无解。")
+                    print("\033[31m Have no result\033[0m")
                 else:
-                    pretty_print("解为：")
+                    pretty_print("\033[35mResult:\033[0m")
                     for var, val in zip([x, y], solutions):
                         print(f"{var} = {val}")
-                    print("近似值：")
+                    print("\033[35mNear result:\033[0m")
                     for var, val in zip(['x', 'y'], [v.evalf() for v in solutions]):
                         print(f"{var} ≈ {val}")
-
             elif choice == '3':
-                # 三元一次方程组
-                print("请输入三个方程，每个方程以等号结尾，例如：x + y + z = 6")
-                eq1_str = input("第一个方程：")
-                eq2_str = input("第二个方程：")
-                eq3_str = input("第三个方程：")
+                print("\033[34mInput math(for example x + y + z = 6):\033[0m")
+                eq1_str = input("\033[34mThe first math\033[0m")
+                eq2_str = input("\033[34mThe second math\033[0m")
+                eq3_str = input("\033[34mThe third math\033[0m")
                 x, y, z = symbols('x y z')
                 lhs1, rhs1 = map(sympify, eq1_str.split('='))
                 lhs2, rhs2 = map(sympify, eq2_str.split('='))
@@ -180,43 +180,37 @@ def solve_math():
                 eq3 = Eq(lhs3, rhs3)
                 solutions = solve((eq1, eq2, eq3), (x, y, z))
                 if not solutions:
-                    print("方程组无解。")
-                    pretty_print("解为：")
+                    print("\033[31mHave no result\033[0m")
+                    pretty_print("\033[35mResult:\033[0m")
                     for var, val in zip([x, y, z], solutions):
                         print(f"{var} = {val}")
-                    print("近似值：")
+                    print("\033[35mNear result:\033[0m")
                     for var, val in zip(['x', 'y', 'z'], [v.evalf() for v in solutions]):
                         print(f"{var} ≈ {val}")
-
             elif choice == '4':
-                # 一元二次方程
-                eq_str = input("请输入一元二次方程（例如：x**2 - 5*x + 6 = 0）：")
+                eq_str = input("\033[34mInput math ,(for example x**2 - 5*x + 6 = 0)")
                 x = symbols('x')
                 lhs, rhs = map(sympify, eq_str.split('='))
                 eq = Eq(lhs, rhs)
                 solutions = solve(eq, x)
                 if not solutions:
-                    print("该方程无实数解。")
+                    print("\033[31mHave no result\033[0m")
                 else:
-                    pretty_print("解为：")
+                    pretty_print("\033[35mResult:\033[0m")
                     for sol in solutions:
                         print(f"x = {sol}")
-                    print("近似值：")
+                    print("\033[35mNear result:\033[0m")
                     for sol in solutions:
-                        print(f"x ≈ {sol.evalf()}")
-
+                        print(f"\033[35mx ≈ {sol.evalf()}\033[0m")
             else:
-                print("无效的选项，请重新输入。")
-
+                print("\033[31mInput errors\033[0m")
         except Exception as e:
-            print(f"发生错误：{e}")
-            print("请检查输入的方程格式是否正确。")
+            print(f"\033[31mAn error occurred during inputting{e}\033[0m")
 for i in trange(total_open):
 	for j in range(total_open):
 		k = i* j
 History.write(f"\n{hostname}  {year} {month} {day}  {hour}:{minute}")
-print("\033[33mWelcome\033[0m")
-
+cowsay.tux("\033[33mWelcome to linux\033[0m")
 try:
 	while True:
 		command = input("\033[32m>>>\033[0m")
@@ -323,6 +317,16 @@ try:
 			month += 1
 			print(f"\033[35m{calendar.month(year,month)}\033[0m")
 			month = start.month
+		elif command == "chinese dict":
+			print("\033[35m请输入文本\033[0m")
+			string_chinese = input("\033[34m>>>\033[0m")
+			chinese_pinyin = pinyin(
+				hans=string_chinese,
+				heteronym=True
+
+			)
+			for pinyin_chinese in chinese_pinyin:
+				print(f"\033[36m{pinyin_chinese}\033[0m")
 		elif command == "":
 			continue
 		else:
